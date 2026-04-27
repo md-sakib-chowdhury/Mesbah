@@ -1,25 +1,28 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Listings from './pages/Listings';
+import Users from './pages/Users';
+import Settings from './pages/Settings';
+import Layout from './components/Layout';
 
-function App() {
+export default function App() {
+  const [token, setToken] = useState(localStorage.getItem('adminToken'));
+
+  if (!token) return <Login onLogin={t => { localStorage.setItem('adminToken', t); setToken(t); }} />;
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <Layout onLogout={() => { localStorage.removeItem('adminToken'); setToken(null); }}>
+        <Routes>
+          <Route path="/" element={<Dashboard token={token} />} />
+          <Route path="/listings" element={<Listings token={token} />} />
+          <Route path="/users" element={<Users token={token} />} />
+          <Route path="/settings" element={<Settings token={token} />} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </Layout>
+    </BrowserRouter>
   );
 }
-
-export default App;
