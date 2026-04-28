@@ -1,48 +1,59 @@
-import React, { useState } from 'react';
-import { chats } from '../data/mockData';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import API from '../api';
+import ListingCard from '../components/ListingCard';
 import BottomNav from '../components/BottomNav';
 
-export default function Chat() {
-  const [active, setActive] = useState(null);
-  const [msg, setMsg] = useState('');
-  const [messages, setMessages] = useState([{from:'other',text:'হ্যালো! বাসা কি এখনো available?'}]);
+export default function Home() {
+  const navigate = useNavigate();
+  const [listings, setListings] = useState([]);
+  const [search, setSearch] = useState('');
+  const [selectedArea, setSelectedArea] = useState('');
+  const [loading, setLoading] = useState(true);
+  const areas = ['মিরপুর', 'ধানমন্ডি', 'উত্তরা', 'মোহাম্মদপুর'];
 
-  if (active) return (
-    <div style={{display:'flex',flexDirection:'column',height:'100vh'}}>
-      <div style={{padding:16,background:'white',borderBottom:'1px solid #E2E8F0',display:'flex',alignItems:'center',gap:10}}>
-        <button onClick={() => setActive(null)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer'}}>←</button>
-        <div style={{width:36,height:36,borderRadius:18,background:'linear-gradient(135deg,#6C63FF,#764ba2)',display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontWeight:700}}>{active.name[0]}</div>
-        <span style={{fontWeight:700}}>{active.name}</span>
-      </div>
-      <div style={{flex:1,padding:16,overflowY:'auto',display:'flex',flexDirection:'column',gap:8}}>
-        {messages.map((m,i) => (
-          <div key={i} style={{alignSelf:m.from==='me'?'flex-end':'flex-start',background:m.from==='me'?'#6C63FF':'white',color:m.from==='me'?'white':'#2D3748',padding:'10px 14px',borderRadius:14,maxWidth:'75%',boxShadow:'0 2px 6px rgba(0,0,0,0.08)'}}>{m.text}</div>
-        ))}
-      </div>
-      <div style={{padding:12,background:'white',borderTop:'1px solid #E2E8F0',display:'flex',gap:8}}>
-        <input className="input" value={msg} onChange={e=>setMsg(e.target.value)} placeholder="মেসেজ লিখো..." style={{flex:1}} onKeyDown={e=>{if(e.key==='Enter'&&msg){setMessages([...messages,{from:'me',text:msg}]);setMsg('');}}} />
-        <button className="btn btn-primary" onClick={()=>{if(msg){setMessages([...messages,{from:'me',text:msg}]);setMsg('');}}}>পাঠাও</button>
-      </div>
-    </div>
-  );
+  useEffect(() => {
+    API.get('/listings').then(r => { setListings(r.data); setLoading(false); }).catch(() => setLoading(false));
+  }, []);
+
+  const filtered = listings.filter(l => {
+    const matchSearch = search === '' || l.title.includes(search) || l.area.includes(search);
+    const matchArea = selectedArea === '' || l.area === selectedArea;
+    return matchSearch && matchArea;
+  });
 
   return (
     <div>
       <div className="page">
-        <h2 style={{fontWeight:700,marginBottom:16}}>চ্যাট 💬</h2>
-        {chats.map(c => (
-          <div key={c._id} className="card" style={{display:'flex',gap:12,alignItems:'center',cursor:'pointer'}} onClick={() => setActive(c)}>
-            <div style={{width:44,height:44,borderRadius:22,background:'linear-gradient(135deg,#6C63FF,#764ba2)',display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontWeight:700,flexShrink:0}}>{c.name[0]}</div>
-            <div style={{flex:1}}>
-              <div style={{fontWeight:700}}>{c.name}</div>
-              <div style={{fontSize:13,color:'#718096'}}>{c.lastMessage}</div>
-            </div>
-            <div style={{textAlign:'right'}}>
-              <div style={{fontSize:11,color:'#718096'}}>{c.time}</div>
-              {c.unread>0 && <div style={{background:'#6C63FF',color:'white',borderRadius:10,padding:'2px 7px',fontSize:11,marginTop:4}}>{c.unread}</div>}
-            </div>
+        <div className="hero">
+          <div className="hero-text">
+            <h2 style={{ fontSize: 26, marginBottom: 6 }}>🏠 মেসবাহ</h2>
+            <p style={{ opacity: 0.85, marginBottom: 12 }}>তোমার পছন্দের মেস খোঁজো</p>
           </div>
-        ))}
+          <div className="hero-search" style={{ width: '100%' }}>
+            <input className="input" placeholder="এলাকা বা মেসের নাম লিখো..." style={{ background: 'white', color: '#333' }} value={search} onChange={e => { setSearch(e.target.value); setSelectedArea(''); }} />
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+          {areas.map(a => (
+            <span key={a} onClick={() => { setSelectedArea(selectedArea === a ? '' : a); setSearch(''); }}
+              style={{ background: selectedArea === a ? '#6C63FF' : 'white', color: selectedArea === a ? 'white' : '#333', padding: '6px 14px', borderRadius: 20, fontSize: 13, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.08)', transition: 'all 0.2s' }}>
+              {a}
+            </span>
+          ))}
+        </div>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: 40, color: '#718096' }}>Loading...</div>
+        ) : (
+          <>
+            <h3 style={{ marginBottom: 12, fontWeight: 700 }}>
+              {filtered.length === 0 ? '❌ কোনো লিস্টিং পাওয়া যায়নি' : `${filtered.length}টি লিস্টিং`}
+            </h3>
+            <div className="listing-grid">
+              {filtered.map(l => <ListingCard key={l._id} listing={l} />)}
+            </div>
+          </>
+        )}
       </div>
       <BottomNav />
     </div>
