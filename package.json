@@ -2,9 +2,9 @@
   "name": "mesbah",
   "version": "1.0.0",
   "scripts": {
-    "start": "concurrently \"cd server && node server.js\" \"cd client && npm start\" \"cd admin && npm start\""
+    "start": "concurrently \"cd server && node server.js\" \"cd client && npm start\""
   },
   "dependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.0.0"
   }
 }
