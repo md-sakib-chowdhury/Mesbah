@@ -13,7 +13,7 @@ export default function ListingCard({ listing }) {
           {listing.area} · <span className={`badge badge-${listing.type}`}>{typeLabels[listing.type]}</span> · {genderLabels[listing.gender]}
         </div>
         <div className="lcf-tags">
-          {listing.amenities.slice(0, 3).map(a => <span key={a} className="tag">{a}</span>)}
+          {(listing.amenities || []).slice(0, 3).map(a => <span key={a} className="tag">{a}</span>)}
         </div>
       </div>
       <div className="lcf-right">

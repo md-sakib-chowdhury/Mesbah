@@ -4,6 +4,7 @@ import API from '../api';
 export default function AdminListings() {
     const [listings, setListings] = useState([]);
     const [showForm, setShowForm] = useState(false);
+    const [editId, setEditId] = useState(null);
     const [form, setForm] = useState({ title: '', area: '', rent: '', type: 'mess', gender: 'any', description: '', amenities: '', availableFrom: 'এখনই' });
 
     useEffect(() => {
@@ -16,10 +17,31 @@ export default function AdminListings() {
         setListings(listings.filter(l => l._id !== id));
     };
 
+    const handleEdit = (listing) => {
+        setEditId(listing._id);
+        setForm({
+            title: listing.title,
+            area: listing.area,
+            rent: listing.rent,
+            type: listing.type,
+            gender: listing.gender,
+            description: listing.description || '',
+            amenities: (listing.amenities || []).join(', '),
+            availableFrom: listing.availableFrom || 'এখনই'
+        });
+        setShowForm(true);
+    };
+
     const handleSubmit = async () => {
         const data = { ...form, rent: Number(form.rent), amenities: form.amenities.split(',').map(a => a.trim()) };
-        const res = await API.post('/listings', data);
-        setListings([res.data, ...listings]);
+        if (editId) {
+            const res = await API.put(`/listings/${editId}`, data);
+            setListings(listings.map(l => l._id === editId ? res.data : l));
+            setEditId(null);
+        } else {
+            const res = await API.post('/listings', data);
+            setListings([res.data, ...listings]);
+        }
         setShowForm(false);
         setForm({ title: '', area: '', rent: '', type: 'mess', gender: 'any', description: '', amenities: '', availableFrom: 'এখনই' });
     };
@@ -30,12 +52,15 @@ export default function AdminListings() {
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                 <h1 style={{ fontSize: 24, fontWeight: 700, color: 'white' }}>🏠 Listings</h1>
-                <button onClick={() => setShowForm(!showForm)} style={{ padding: '10px 20px', background: '#6C63FF', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}>
+                <button onClick={() => { setShowForm(!showForm); setEditId(null); setForm({ title: '', area: '', rent: '', type: 'mess', gender: 'any', description: '', amenities: '', availableFrom: 'এখনই' }); }}
+                    style={{ padding: '10px 20px', background: '#6C63FF', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}>
                     {showForm ? '✕ Cancel' : '+ Add Listing'}
                 </button>
             </div>
+
             {showForm && (
                 <div style={{ background: '#1a1d27', borderRadius: 14, padding: 24, border: '1px solid #2d3148', marginBottom: 24 }}>
+                    <h2 style={{ marginBottom: 16, fontSize: 16, color: 'white' }}>{editId ? 'Edit Listing' : 'New Listing'}</h2>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                         <input style={inputStyle} placeholder="Title" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
                         <input style={inputStyle} placeholder="Area" value={form.area} onChange={e => setForm({ ...form, area: e.target.value })} />
@@ -54,9 +79,12 @@ export default function AdminListings() {
                     </div>
                     <input style={inputStyle} placeholder="Amenities (WiFi, গ্যাস, পানি)" value={form.amenities} onChange={e => setForm({ ...form, amenities: e.target.value })} />
                     <textarea style={{ ...inputStyle, height: 80, resize: 'none' }} placeholder="Description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
-                    <button onClick={handleSubmit} style={{ padding: '12px 24px', background: '#6C63FF', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}>Save</button>
+                    <button onClick={handleSubmit} style={{ padding: '12px 24px', background: '#6C63FF', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}>
+                        {editId ? 'Update' : 'Save'}
+                    </button>
                 </div>
             )}
+
             <div style={{ background: '#1a1d27', borderRadius: 14, border: '1px solid #2d3148', overflow: 'hidden' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
@@ -73,7 +101,8 @@ export default function AdminListings() {
                                 <td style={{ padding: '14px 20px', color: '#718096' }}>{l.area}</td>
                                 <td style={{ padding: '14px 20px', color: '#6C63FF', fontWeight: 700 }}>৳{l.rent?.toLocaleString()}</td>
                                 <td style={{ padding: '14px 20px', color: '#718096' }}>{l.type}</td>
-                                <td style={{ padding: '14px 20px' }}>
+                                <td style={{ padding: '14px 20px', display: 'flex', gap: 8 }}>
+                                    <button onClick={() => handleEdit(l)} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', background: '#6C63FF22', color: '#6C63FF', fontWeight: 600 }}>Edit</button>
                                     <button onClick={() => deleteListing(l._id)} style={{ padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', background: '#ff475722', color: '#ff4757', fontWeight: 600 }}>Delete</button>
                                 </td>
                             </tr>
