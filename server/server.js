@@ -19,11 +19,12 @@ app.use('/api/listings', require('./src/routes/listings'));
 app.use('/api/users', require('./src/routes/users'));
 app.use('/api/admin', require('./src/routes/admin'));
 app.use('/api/settings', require('./src/routes/settings'));
+app.use('/api/upload', require('./src/routes/upload'));
 
 io.on('connection', (socket) => {
   socket.on('join', (room) => socket.join(room));
   socket.on('message', (data) => io.to(data.room).emit('message', data));
-  socket.on('disconnect', () => {});
+  socket.on('disconnect', () => { });
 });
 
 mongoose.connect(process.env.MONGO_URI)
