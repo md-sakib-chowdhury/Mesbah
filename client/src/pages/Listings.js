@@ -1,306 +1,184 @@
-// import React, { useState, useEffect } from 'react';
-// import API from '../api';
-// import ListingCard from '../components/ListingCard';
-// import BottomNav from '../components/BottomNav';
-
-// export default function Listings() {
-//   const [listings, setListings] = useState([]);
-//   const [filter, setFilter] = useState('all');
-//   const [loading, setLoading] = useState(true);
-//   const filters = [['all', 'সব'], ['mess', 'মেস'], ['sublet', 'সাবলেট'], ['seat', 'সিট']];
-
-//   useEffect(() => {
-//     const query = filter === 'all' ? '' : `?type=${filter}`;
-//     API.get(`/listings${query}`).then(r => { setListings(r.data); setLoading(false); }).catch(() => setLoading(false));
-//   }, [filter]);
-
-//   return (
-//     <div>
-//       <div className="page">
-//         <h2 style={{ fontWeight: 700, marginBottom: 12 }}>সব লিস্টিং</h2>
-//         <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-//           {filters.map(([val, label]) => (
-//             <span key={val} onClick={() => setFilter(val)}
-//               style={{ padding: '6px 14px', borderRadius: 20, fontSize: 12, cursor: 'pointer', background: filter === val ? '#6C63FF' : 'white', color: filter === val ? 'white' : '#718096', boxShadow: '0 2px 6px rgba(0,0,0,0.08)' }}>
-//               {label}
-//             </span>
-//           ))}
-//         </div>
-//         {loading ? (
-//           <div style={{ textAlign: 'center', padding: 40, color: '#718096' }}>Loading...</div>
-//         ) : listings.length === 0 ? (
-//           <div style={{ textAlign: 'center', padding: 40, color: '#718096' }}>কোনো লিস্টিং নেই</div>
-//         ) : (
-//           <div className="listing-grid">
-//             {listings.map(l => <ListingCard key={l._id} listing={l} />)}
-//           </div>
-//         )}
-//       </div>
-//       <BottomNav />
-//     </div>
-//   );
-// }
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../api';
-import BottomNav from '../components/BottomNav';
 
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Sora:wght@400;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Sora:wght@400;600;700;800&display=swap');
 
-  .listings-app { font-family: 'Sora', sans-serif; background: #0D0D1A; min-height: 100vh; color: #fff; }
+  .listings-wrap { background: #0D0D1A; min-height: 100vh; color: #fff; font-family: 'Sora', sans-serif; }
 
-  .listings-header {
-    position: sticky; top: 0; z-index: 50;
-    background: rgba(13,13,26,0.92);
-    backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-    padding: 20px 20px 16px;
-  }
+  .listings-hero { background: linear-gradient(135deg, #1a1040 0%, #0D0D1A 100%); border-bottom: 1px solid rgba(255,255,255,0.06); padding: 48px 48px 36px; }
+  .listings-hero-inner { max-width: 1200px; margin: 0 auto; }
+  .listings-hero h1 { font-size: 36px; font-weight: 800; font-family: 'Hind Siliguri', sans-serif; margin-bottom: 8px; }
+  .listings-hero h1 span { background: linear-gradient(90deg, #a78bfa, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .listings-hero p { color: rgba(255,255,255,0.45); font-family: 'Hind Siliguri', sans-serif; font-size: 15px; margin-bottom: 28px; }
 
-  .listings-title-row {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 16px;
-  }
-  .listings-title {
-    font-size: 22px; font-weight: 700;
-    font-family: 'Hind Siliguri', sans-serif;
-  }
-  .listings-title span {
-    background: linear-gradient(90deg, #6C63FF, #FF6B6B);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  }
-  .count-badge {
-    font-size: 12px; font-weight: 600;
-    background: rgba(108,99,255,0.15);
-    color: #a78bfa;
-    border: 1px solid rgba(108,99,255,0.25);
-    padding: 4px 12px; border-radius: 20px;
-    font-family: 'Hind Siliguri', sans-serif;
-  }
+  .search-filter-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .search-inp-wrap { flex: 1; min-width: 200px; position: relative; }
+  .search-inp-wrap input { width: 100%; padding: 13px 16px 13px 44px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; color: #fff; font-size: 14px; font-family: 'Hind Siliguri', sans-serif; outline: none; box-sizing: border-box; transition: border-color 0.2s; }
+  .search-inp-wrap input:focus { border-color: #a78bfa; }
+  .search-inp-wrap input::placeholder { color: rgba(255,255,255,0.35); }
+  .search-inp-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; opacity: 0.5; }
+  .filter-select { padding: 13px 16px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; color: #fff; font-size: 14px; font-family: 'Hind Siliguri', sans-serif; outline: none; cursor: pointer; }
+  .filter-select option { background: #1a1d27; }
 
-  .filter-scroll {
-    display: flex; gap: 8px;
-    overflow-x: auto; scrollbar-width: none;
+  .listings-body { max-width: 1200px; margin: 0 auto; padding: 36px 48px 64px; }
+
+  .type-tabs { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
+  .type-tab { padding: 9px 20px; border-radius: 30px; font-size: 13px; font-family: 'Hind Siliguri', sans-serif; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.6); transition: all 0.2s; }
+  .type-tab:hover { border-color: rgba(167,139,250,0.4); color: #fff; }
+  .type-tab.active { background: linear-gradient(135deg, #6C63FF, #8B83FF); border-color: transparent; color: #fff; font-weight: 600; box-shadow: 0 4px 16px rgba(108,99,255,0.3); }
+
+  .results-info { font-size: 13px; color: rgba(255,255,255,0.4); font-family: 'Hind Siliguri', sans-serif; margin-bottom: 20px; }
+
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+
+  .l-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 20px; overflow: hidden; cursor: pointer; transition: all 0.25s; }
+  .l-card:hover { transform: translateY(-4px); border-color: rgba(167,139,250,0.25); box-shadow: 0 12px 40px rgba(108,99,255,0.15); }
+  .l-card-img { position: relative; height: 200px; overflow: hidden; }
+  .l-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+  .l-card:hover .l-card-img img { transform: scale(1.04); }
+  .l-card-img-ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 52px; background: linear-gradient(135deg, #1a1040, #2d1b69); }
+  .l-avail { position: absolute; top: 12px; left: 12px; padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; font-family: 'Hind Siliguri', sans-serif; }
+  .l-avail.now { background: rgba(16,185,129,0.9); color: #fff; }
+  .l-avail.later { background: rgba(245,158,11,0.9); color: #fff; }
+  .l-type { position: absolute; top: 12px; right: 12px; padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; background: rgba(13,13,26,0.8); color: rgba(255,255,255,0.9); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1); }
+  .l-card-body { padding: 18px 20px; }
+  .l-title { font-size: 16px; font-weight: 700; font-family: 'Hind Siliguri', sans-serif; margin-bottom: 6px; }
+  .l-loc { font-size: 13px; color: rgba(255,255,255,0.45); font-family: 'Hind Siliguri', sans-serif; margin-bottom: 14px; }
+  .l-bottom { display: flex; justify-content: space-between; align-items: flex-end; }
+  .l-price-num { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, #a78bfa, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .l-price-unit { font-size: 11px; color: rgba(255,255,255,0.35); font-family: 'Hind Siliguri', sans-serif; }
+  .l-tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .l-tag { font-size: 10px; padding: 3px 9px; border-radius: 20px; background: rgba(108,99,255,0.1); color: rgba(167,139,250,0.85); border: 1px solid rgba(108,99,255,0.18); font-family: 'Hind Siliguri', sans-serif; }
+
+  .empty-box { text-align: center; padding: 80px 20px; color: rgba(255,255,255,0.3); font-family: 'Hind Siliguri', sans-serif; }
+  .empty-box div:first-child { font-size: 52px; margin-bottom: 16px; }
+  .loading-box { text-align: center; padding: 80px 20px; color: rgba(255,255,255,0.35); font-family: 'Hind Siliguri', sans-serif; }
+
+  @media (max-width: 768px) {
+    .listings-hero { padding: 32px 20px 24px; }
+    .listings-body { padding: 24px 20px 48px; }
+    .cards-grid { grid-template-columns: 1fr; }
+    .listings-hero h1 { font-size: 26px; }
   }
-  .filter-scroll::-webkit-scrollbar { display: none; }
-
-  .filter-pill {
-    flex-shrink: 0;
-    display: flex; align-items: center; gap: 6px;
-    padding: 8px 16px; border-radius: 30px;
-    font-size: 13px; font-family: 'Hind Siliguri', sans-serif;
-    cursor: pointer; white-space: nowrap;
-    border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.05);
-    color: rgba(255,255,255,0.6);
-    transition: all 0.2s;
-  }
-  .filter-pill.active {
-    background: linear-gradient(135deg, #6C63FF, #8B83FF);
-    border-color: transparent; color: #fff; font-weight: 600;
-  }
-  .filter-pill .pill-icon { font-size: 14px; }
-
-  .listings-body { padding: 20px 20px 100px; }
-
-  .listing-grid-list { display: flex; flex-direction: column; gap: 14px; }
-
-  .mes-card {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 18px; overflow: hidden;
-    transition: transform 0.2s, border-color 0.2s;
-    cursor: pointer;
-  }
-  .mes-card:hover { transform: translateY(-2px); border-color: rgba(108,99,255,0.35); }
-
-  .card-img {
-    width: 100%; height: 155px;
-    position: relative; overflow: hidden;
-  }
-  .card-img-bg {
-    width: 100%; height: 100%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 44px;
-  }
-  .bg-mess    { background: linear-gradient(135deg, #1a1040, #2d1b69); }
-  .bg-sublet  { background: linear-gradient(135deg, #0d2137, #1a4a7a); }
-  .bg-seat    { background: linear-gradient(135deg, #1a2800, #2d5200); }
-  .bg-default { background: linear-gradient(135deg, #1a1530, #2a1a40); }
-
-  .type-badge {
-    position: absolute; top: 10px; left: 10px;
-    font-size: 10px; font-weight: 600;
-    padding: 4px 10px; border-radius: 20px;
-    font-family: 'Sora', sans-serif;
-  }
-  .badge-mess   { background: rgba(108,99,255,0.9); color: #fff; }
-  .badge-sublet { background: rgba(59,130,246,0.9);  color: #fff; }
-  .badge-seat   { background: rgba(16,185,129,0.9);  color: #fff; }
-
-  .card-fav {
-    position: absolute; top: 10px; right: 10px;
-    width: 30px; height: 30px;
-    background: rgba(0,0,0,0.4); border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px; cursor: pointer;
-    transition: transform 0.15s;
-  }
-  .card-fav:hover { transform: scale(1.15); }
-
-  .card-body { padding: 14px 16px; }
-  .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-  .card-title { font-size: 15px; font-weight: 600; font-family: 'Hind Siliguri', sans-serif; line-height: 1.3; flex: 1; padding-right: 8px; }
-  .card-price { text-align: right; }
-  .price-num {
-    font-size: 16px; font-weight: 700;
-    background: linear-gradient(135deg, #6C63FF, #FF6B6B);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  }
-  .price-unit { font-size: 10px; color: rgba(255,255,255,0.4); display: block; font-family: 'Hind Siliguri', sans-serif; }
-
-  .card-meta { display: flex; gap: 12px; font-size: 11px; color: rgba(255,255,255,0.45); font-family: 'Hind Siliguri', sans-serif; margin-bottom: 10px; flex-wrap: wrap; }
-  .card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
-  .tag { font-size: 10px; padding: 3px 9px; border-radius: 20px; font-family: 'Hind Siliguri', sans-serif; background: rgba(108,99,255,0.12); color: rgba(167,139,250,0.9); border: 1px solid rgba(108,99,255,0.2); }
-
-  .empty-state { text-align: center; padding: 60px 20px; color: rgba(255,255,255,0.3); font-family: 'Hind Siliguri', sans-serif; }
-  .empty-icon { font-size: 48px; margin-bottom: 14px; }
-  .empty-text { font-size: 15px; margin-bottom: 6px; }
-  .empty-sub  { font-size: 12px; color: rgba(255,255,255,0.2); }
-
-  .loading-wrap { display: flex; flex-direction: column; gap: 14px; padding: 20px; }
-  .skeleton {
-    background: rgba(255,255,255,0.04); border-radius: 18px; overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.06);
-  }
-  .skeleton-img { height: 155px; background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
-  .skeleton-body { padding: 14px 16px; }
-  .skeleton-line { height: 12px; border-radius: 6px; background: rgba(255,255,255,0.06); margin-bottom: 10px; }
-  .skeleton-line.short { width: 40%; }
-  .skeleton-line.med   { width: 65%; }
-  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 `;
 
-const FILTERS = [
-  { val: 'all', label: 'সব', icon: '🏘️' },
-  { val: 'mess', label: 'মেস', icon: '🏠' },
-  { val: 'sublet', label: 'সাবলেট', icon: '🔑' },
-  { val: 'seat', label: 'সিট', icon: '🛏️' },
+const TYPES = [
+  { val: 'all', label: 'সব' },
+  { val: 'mess', label: '🏠 মেস' },
+  { val: 'sublet', label: '🔑 সাবলেট' },
+  { val: 'seat', label: '🛏 সিট' },
 ];
-
-const TYPE_CONFIG = {
-  mess: { label: 'মেস', badgeClass: 'badge-mess', bgClass: 'bg-mess', icon: '🏠' },
-  sublet: { label: 'সাবলেট', badgeClass: 'badge-sublet', bgClass: 'bg-sublet', icon: '🔑' },
-  seat: { label: 'সিট', badgeClass: 'badge-seat', bgClass: 'bg-seat', icon: '🛏️' },
-};
-
-function SkeletonCard() {
-  return (
-    <div className="skeleton">
-      <div className="skeleton-img" />
-      <div className="skeleton-body">
-        <div className="skeleton-line med" />
-        <div className="skeleton-line short" />
-      </div>
-    </div>
-  );
-}
 
 export default function Listings() {
   const navigate = useNavigate();
   const [listings, setListings] = useState([]);
-  const [filter, setFilter] = useState('all');
+  const [areas, setAreas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [type, setType] = useState('all');
+  const [area, setArea] = useState('all');
 
   useEffect(() => {
-    setLoading(true);
-    const query = filter === 'all' ? '' : `?type=${filter}`;
-    API.get(`/listings${query}`)
-      .then(r => { setListings(r.data); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, [filter]);
+    API.get('/listings').then(r => { setListings(r.data); setLoading(false); }).catch(() => setLoading(false));
+    API.get('/areas').then(r => setAreas(r.data)).catch(() => { });
+  }, []);
 
-  const typeConf = (type) => TYPE_CONFIG[type] || { label: type, badgeClass: 'badge-mess', bgClass: 'bg-default', icon: '🏢' };
+  const filtered = listings.filter(l => {
+    const matchSearch = search === '' || l.title.toLowerCase().includes(search.toLowerCase()) || l.area.toLowerCase().includes(search.toLowerCase());
+    const matchType = type === 'all' || l.type === type;
+    const matchArea = area === 'all' || l.area === area;
+    return matchSearch && matchType && matchArea;
+  });
+
+  const genderLabel = g => g === 'male' ? '👨 ছেলে' : g === 'female' ? '👩 মেয়ে' : '👥 যেকেউ';
 
   return (
     <>
       <style>{styles}</style>
-      <div className="listings-app">
+      <div className="listings-wrap">
 
-        {/* Sticky Header */}
-        <div className="listings-header">
-          <div className="listings-title-row">
-            <h2 className="listings-title">সব <span>লিস্টিং</span></h2>
-            {!loading && (
-              <span className="count-badge">{listings.length}টি</span>
-            )}
-          </div>
-
-          <div className="filter-scroll">
-            {FILTERS.map(({ val, label, icon }) => (
-              <div
-                key={val}
-                className={`filter-pill ${filter === val ? 'active' : ''}`}
-                onClick={() => setFilter(val)}
-              >
-                <span className="pill-icon">{icon}</span>
-                {label}
+        {/* Hero */}
+        <div className="listings-hero">
+          <div className="listings-hero-inner">
+            <h1>সব <span>লিস্টিং</span></h1>
+            <p>ঢাকার সেরা মেস, সাবলেট ও সিট খুঁজে নাও</p>
+            <div className="search-filter-row">
+              <div className="search-inp-wrap">
+                <span className="search-inp-icon">🔍</span>
+                <input placeholder="মেস বা এলাকার নাম লিখো..." value={search}
+                  onChange={e => setSearch(e.target.value)} />
               </div>
-            ))}
+              <select className="filter-select" value={area} onChange={e => setArea(e.target.value)}>
+                <option value="all">সব এলাকা</option>
+                {areas.map(a => <option key={a._id} value={a.nameBn}>{a.nameBn}</option>)}
+              </select>
+            </div>
           </div>
         </div>
 
         {/* Body */}
         <div className="listings-body">
-          {loading ? (
-            <div className="loading-wrap">
-              {[1, 2, 3].map(i => <SkeletonCard key={i} />)}
+          <div className="type-tabs">
+            {TYPES.map(t => (
+              <div key={t.val} className={`type-tab ${type === t.val ? 'active' : ''}`}
+                onClick={() => setType(t.val)}>
+                {t.label}
+              </div>
+            ))}
+          </div>
+
+          {!loading && (
+            <div className="results-info">
+              {filtered.length === 0 ? 'কোনো লিস্টিং পাওয়া যায়নি' : `${filtered.length}টি লিস্টিং পাওয়া গেছে`}
             </div>
-          ) : listings.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-icon">🔍</div>
-              <div className="empty-text">কোনো লিস্টিং পাওয়া যায়নি</div>
-              <div className="empty-sub">অন্য ক্যাটাগরি দেখো</div>
+          )}
+
+          {loading ? (
+            <div className="loading-box">লোড হচ্ছে...</div>
+          ) : filtered.length === 0 ? (
+            <div className="empty-box">
+              <div>🔍</div>
+              কোনো লিস্টিং পাওয়া যায়নি
             </div>
           ) : (
-            <div className="listing-grid-list">
-              {listings.map(l => {
-                const conf = typeConf(l.type);
-                return (
-                  <div key={l._id} className="mes-card" onClick={() => navigate(`/listings/${l._id}`)}>
-                    <div className="card-img">
-                      <div className={`card-img-bg ${conf.bgClass}`}>{conf.icon}</div>
-                      <span className={`type-badge ${conf.badgeClass}`}>{conf.label}</span>
-                      <span className="card-fav">🤍</span>
-                    </div>
-                    <div className="card-body">
-                      <div className="card-top">
-                        <div className="card-title">{l.title}</div>
-                        <div className="card-price">
-                          <span className="price-num">৳{l.price}</span>
-                          <span className="price-unit">টাকা/মাস</span>
-                        </div>
+            <div className="cards-grid">
+              {filtered.map(l => (
+                <div key={l._id} className="l-card" onClick={() => navigate(`/listings/${l._id}`)}>
+                  <div className="l-card-img">
+                    {l.images?.[0]
+                      ? <img src={l.images[0]} alt={l.title} />
+                      : <div className="l-card-img-ph">🏢</div>
+                    }
+                    <span className={`l-avail ${l.availableFrom === 'এখনই' ? 'now' : 'later'}`}>
+                      {l.availableFrom === 'এখনই' ? '✓ এখনই খালি' : l.availableFrom}
+                    </span>
+                    <span className="l-type">
+                      {l.type === 'mess' ? '🏠 মেস' : l.type === 'sublet' ? '🔑 সাবলেট' : '🛏 সিট'}
+                    </span>
+                  </div>
+                  <div className="l-card-body">
+                    <div className="l-title">{l.title}</div>
+                    <div className="l-loc">📍 {l.area}</div>
+                    <div className="l-bottom">
+                      <div>
+                        <div className="l-price-num">৳{l.rent?.toLocaleString()}</div>
+                        <div className="l-price-unit">প্রতি মাস</div>
                       </div>
-                      <div className="card-meta">
-                        {l.area && <span>📍 {l.area}</span>}
-                        {l.rating && <span>⭐ {l.rating}</span>}
-                        {l.beds && <span>🛏 {l.beds}</span>}
+                      <div className="l-tags">
+                        <span className="l-tag">{genderLabel(l.gender)}</span>
+                        {l.amenities?.slice(0, 2).map(a => (
+                          <span key={a} className="l-tag">{a}</span>
+                        ))}
                       </div>
-                      {l.tags?.length > 0 && (
-                        <div className="card-tags">
-                          {l.tags.map(t => <span key={t} className="tag">{t}</span>)}
-                        </div>
-                      )}
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           )}
         </div>
-
-        <BottomNav />
       </div>
     </>
   );
