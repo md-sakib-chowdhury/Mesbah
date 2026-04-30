@@ -15,6 +15,7 @@ import AdminListings from './admin/Listings';
 import AdminUsers from './admin/Users';
 import AdminSettings from './admin/Settings';
 import { useAuth } from './context/AuthContext';
+import AdminHome from './admin/Home';
 
 function AdminRoute({ children }) {
   const { user } = useAuth();
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="listings" element={<AdminListings />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="settings" element={<AdminSettings />} />
+          <Route path="home" element={<AdminHome />} />
         </Route>
       </Routes>
     </BrowserRouter>
