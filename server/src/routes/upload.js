@@ -12,11 +12,25 @@ cloudinary.config({
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
+// File upload
 router.post('/', auth, upload.single('image'), async (req, res) => {
     try {
         const b64 = Buffer.from(req.file.buffer).toString('base64');
         const dataURI = `data:${req.file.mimetype};base64,${b64}`;
         const result = await cloudinary.uploader.upload(dataURI, {
+            folder: 'mesbah',
+        });
+        res.json({ url: result.secure_url });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// URL upload (Unsplash etc)
+router.post('/url', auth, async (req, res) => {
+    try {
+        const { url } = req.body;
+        const result = await cloudinary.uploader.upload(url, {
             folder: 'mesbah',
         });
         res.json({ url: result.secure_url });
