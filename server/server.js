@@ -20,6 +20,7 @@ app.use('/api/users', require('./src/routes/users'));
 app.use('/api/admin', require('./src/routes/admin'));
 app.use('/api/settings', require('./src/routes/settings'));
 app.use('/api/upload', require('./src/routes/upload'));
+app.use('/api/areas', require('./src/routes/areas'));
 
 io.on('connection', (socket) => {
   socket.on('join', (room) => socket.join(room));
