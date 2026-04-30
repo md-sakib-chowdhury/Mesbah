@@ -8,6 +8,7 @@ const menuItems = [
     { path: '/admin/listings', icon: '🏠', label: 'Listings' },
     { path: '/admin/users', icon: '👥', label: 'Users' },
     { path: '/admin/settings', icon: '⚙️', label: 'Settings' },
+    { path: '/admin/areas', icon: '📍', label: 'Areas' },
 ];
 
 export default function AdminLayout() {
