@@ -121,7 +121,10 @@ export default function RoommateMatch() {
                     <span className="match-pref">{u.preferences?.social === 'quiet' ? '🤫 শান্ত' : '🎉 সামাজিক'}</span>
                     {u.preferences?.prayers && <span className="match-pref">🕌 নামাজী</span>}
                   </div>
-                  <button className="match-btn" onClick={() => navigate('/chat')}>💬 মেসেজ করো</button>
+                  <button className="match-btn" onClick={() => {
+                    if (!user) { navigate('/login'); return; }
+                    navigate(`/chat?to=${u._id}&name=${encodeURIComponent(u.name)}`);
+                  }}>💬 মেসেজ করো</button>
                 </div>
               ))}
             </div>
