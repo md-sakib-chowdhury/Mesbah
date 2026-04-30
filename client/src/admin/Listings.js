@@ -6,6 +6,9 @@ export default function AdminListings() {
     const [showForm, setShowForm] = useState(false);
     const [editId, setEditId] = useState(null);
     const [form, setForm] = useState({ title: '', area: '', rent: '', type: 'mess', gender: 'any', description: '', amenities: '', availableFrom: 'এখনই' });
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState('');
+    const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
         API.get('/admin/listings').then(r => setListings(r.data));
@@ -29,11 +32,40 @@ export default function AdminListings() {
             amenities: (listing.amenities || []).join(', '),
             availableFrom: listing.availableFrom || 'এখনই'
         });
+        setImagePreview(listing.images?.[0] || '');
         setShowForm(true);
     };
 
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setImageFile(file);
+            setImagePreview(URL.createObjectURL(file));
+        }
+    };
+
+    const uploadImage = async () => {
+        if (!imageFile) return '';
+        setUploading(true);
+        const formData = new FormData();
+        formData.append('image', imageFile);
+        const res = await API.post('/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        setUploading(false);
+        return res.data.url;
+    };
+
     const handleSubmit = async () => {
-        const data = { ...form, rent: Number(form.rent), amenities: form.amenities.split(',').map(a => a.trim()) };
+        const imageUrl = await uploadImage();
+        const data = {
+            ...form,
+            rent: Number(form.rent),
+            amenities: form.amenities.split(',').map(a => a.trim()),
+            images: imageUrl ? [imageUrl] : (editId ? undefined : [])
+        };
+        if (!imageUrl && editId) delete data.images;
+
         if (editId) {
             const res = await API.put(`/listings/${editId}`, data);
             setListings(listings.map(l => l._id === editId ? res.data : l));
@@ -43,6 +75,8 @@ export default function AdminListings() {
             setListings([res.data, ...listings]);
         }
         setShowForm(false);
+        setImageFile(null);
+        setImagePreview('');
         setForm({ title: '', area: '', rent: '', type: 'mess', gender: 'any', description: '', amenities: '', availableFrom: 'এখনই' });
     };
 
@@ -52,7 +86,7 @@ export default function AdminListings() {
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                 <h1 style={{ fontSize: 24, fontWeight: 700, color: 'white' }}>🏠 Listings</h1>
-                <button onClick={() => { setShowForm(!showForm); setEditId(null); setForm({ title: '', area: '', rent: '', type: 'mess', gender: 'any', description: '', amenities: '', availableFrom: 'এখনই' }); }}
+                <button onClick={() => { setShowForm(!showForm); setEditId(null); setImageFile(null); setImagePreview(''); setForm({ title: '', area: '', rent: '', type: 'mess', gender: 'any', description: '', amenities: '', availableFrom: 'এখনই' }); }}
                     style={{ padding: '10px 20px', background: '#6C63FF', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}>
                     {showForm ? '✕ Cancel' : '+ Add Listing'}
                 </button>
@@ -79,8 +113,18 @@ export default function AdminListings() {
                     </div>
                     <input style={inputStyle} placeholder="Amenities (WiFi, গ্যাস, পানি)" value={form.amenities} onChange={e => setForm({ ...form, amenities: e.target.value })} />
                     <textarea style={{ ...inputStyle, height: 80, resize: 'none' }} placeholder="Description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
-                    <button onClick={handleSubmit} style={{ padding: '12px 24px', background: '#6C63FF', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}>
-                        {editId ? 'Update' : 'Save'}
+
+                    {/* Image Upload */}
+                    <div style={{ marginBottom: 16 }}>
+                        <label style={{ color: '#718096', fontSize: 13, display: 'block', marginBottom: 8 }}>Listing Image</label>
+                        <input type="file" accept="image/*" onChange={handleImageChange} style={{ color: 'white', fontSize: 13 }} />
+                        {imagePreview && (
+                            <img src={imagePreview} alt="preview" style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 8, marginTop: 10 }} />
+                        )}
+                    </div>
+
+                    <button onClick={handleSubmit} disabled={uploading} style={{ padding: '12px 24px', background: '#6C63FF', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, opacity: uploading ? 0.7 : 1 }}>
+                        {uploading ? 'Uploading...' : editId ? 'Update' : 'Save'}
                     </button>
                 </div>
             )}
@@ -89,7 +133,7 @@ export default function AdminListings() {
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ borderBottom: '1px solid #2d3148' }}>
-                            {['Title', 'Area', 'Rent', 'Type', 'Action'].map(h => (
+                            {['Image', 'Title', 'Area', 'Rent', 'Type', 'Action'].map(h => (
                                 <th key={h} style={{ padding: '14px 20px', textAlign: 'left', color: '#718096', fontSize: 13 }}>{h}</th>
                             ))}
                         </tr>
@@ -97,6 +141,12 @@ export default function AdminListings() {
                     <tbody>
                         {listings.map(l => (
                             <tr key={l._id} style={{ borderBottom: '1px solid #2d3148' }}>
+                                <td style={{ padding: '14px 20px' }}>
+                                    {l.images?.[0]
+                                        ? <img src={l.images[0]} alt={l.title} style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover' }} />
+                                        : <div style={{ width: 48, height: 48, borderRadius: 8, background: '#2d3148', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🏠</div>
+                                    }
+                                </td>
                                 <td style={{ padding: '14px 20px', color: 'white' }}>{l.title}</td>
                                 <td style={{ padding: '14px 20px', color: '#718096' }}>{l.area}</td>
                                 <td style={{ padding: '14px 20px', color: '#6C63FF', fontWeight: 700 }}>৳{l.rent?.toLocaleString()}</td>
@@ -107,7 +157,7 @@ export default function AdminListings() {
                                 </td>
                             </tr>
                         ))}
-                        {listings.length === 0 && <tr><td colSpan={5} style={{ padding: 40, textAlign: 'center', color: '#718096' }}>No listings yet</td></tr>}
+                        {listings.length === 0 && <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', color: '#718096' }}>No listings yet</td></tr>}
                     </tbody>
                 </table>
             </div>
