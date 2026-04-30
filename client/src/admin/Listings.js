@@ -8,6 +8,7 @@ export default function AdminListings() {
     const [form, setForm] = useState({ title: '', area: '', rent: '', type: 'mess', gender: 'any', description: '', amenities: '', availableFrom: 'এখনই' });
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState('');
+    const [imageUrl, setImageUrl] = useState('');
     const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
@@ -33,6 +34,7 @@ export default function AdminListings() {
             availableFrom: listing.availableFrom || 'এখনই'
         });
         setImagePreview(listing.images?.[0] || '');
+        setImageUrl('');
         setShowForm(true);
     };
 
@@ -41,30 +43,38 @@ export default function AdminListings() {
         if (file) {
             setImageFile(file);
             setImagePreview(URL.createObjectURL(file));
+            setImageUrl('');
         }
     };
 
     const uploadImage = async () => {
-        if (!imageFile) return '';
-        setUploading(true);
-        const formData = new FormData();
-        formData.append('image', imageFile);
-        const res = await API.post('/upload', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        });
-        setUploading(false);
-        return res.data.url;
+        if (imageFile) {
+            setUploading(true);
+            const formData = new FormData();
+            formData.append('image', imageFile);
+            const res = await API.post('/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setUploading(false);
+            return res.data.url;
+        } else if (imageUrl) {
+            setUploading(true);
+            const res = await API.post('/upload/url', { url: imageUrl });
+            setUploading(false);
+            return res.data.url;
+        }
+        return '';
     };
 
     const handleSubmit = async () => {
-        const imageUrl = await uploadImage();
+        const uploadedUrl = await uploadImage();
         const data = {
             ...form,
             rent: Number(form.rent),
             amenities: form.amenities.split(',').map(a => a.trim()),
-            images: imageUrl ? [imageUrl] : (editId ? undefined : [])
+            images: uploadedUrl ? [uploadedUrl] : (editId ? undefined : [])
         };
-        if (!imageUrl && editId) delete data.images;
+        if (!uploadedUrl && editId) delete data.images;
 
         if (editId) {
             const res = await API.put(`/listings/${editId}`, data);
@@ -77,6 +87,7 @@ export default function AdminListings() {
         setShowForm(false);
         setImageFile(null);
         setImagePreview('');
+        setImageUrl('');
         setForm({ title: '', area: '', rent: '', type: 'mess', gender: 'any', description: '', amenities: '', availableFrom: 'এখনই' });
     };
 
@@ -86,7 +97,7 @@ export default function AdminListings() {
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                 <h1 style={{ fontSize: 24, fontWeight: 700, color: 'white' }}>🏠 Listings</h1>
-                <button onClick={() => { setShowForm(!showForm); setEditId(null); setImageFile(null); setImagePreview(''); setForm({ title: '', area: '', rent: '', type: 'mess', gender: 'any', description: '', amenities: '', availableFrom: 'এখনই' }); }}
+                <button onClick={() => { setShowForm(!showForm); setEditId(null); setImageFile(null); setImagePreview(''); setImageUrl(''); setForm({ title: '', area: '', rent: '', type: 'mess', gender: 'any', description: '', amenities: '', availableFrom: 'এখনই' }); }}
                     style={{ padding: '10px 20px', background: '#6C63FF', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}>
                     {showForm ? '✕ Cancel' : '+ Add Listing'}
                 </button>
@@ -117,7 +128,24 @@ export default function AdminListings() {
                     {/* Image Upload */}
                     <div style={{ marginBottom: 16 }}>
                         <label style={{ color: '#718096', fontSize: 13, display: 'block', marginBottom: 8 }}>Listing Image</label>
+
+                        {/* URL Input */}
+                        <input
+                            style={{ ...inputStyle, marginBottom: 8 }}
+                            placeholder="Unsplash URL paste করো... (https://images.unsplash.com/...)"
+                            value={imageUrl}
+                            onChange={e => {
+                                setImageUrl(e.target.value);
+                                setImagePreview(e.target.value);
+                                setImageFile(null);
+                            }}
+                        />
+
+                        <div style={{ color: '#718096', fontSize: 12, marginBottom: 8, textAlign: 'center' }}>— অথবা PC থেকে upload করো —</div>
+
+                        {/* File Input */}
                         <input type="file" accept="image/*" onChange={handleImageChange} style={{ color: 'white', fontSize: 13 }} />
+
                         {imagePreview && (
                             <img src={imagePreview} alt="preview" style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 8, marginTop: 10 }} />
                         )}
