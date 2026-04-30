@@ -9,7 +9,6 @@ const styles = `
 
   .home-app { font-family: 'Sora', sans-serif; background: #0D0D1A; min-height: 100vh; color: #fff; overflow-x: hidden; }
 
-  /* ===== HERO ===== */
   .hero-wrap { position: relative; min-height: 280px; overflow: hidden; }
   .hero-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
   .hero-bg-color { position: absolute; inset: 0; z-index: 0; }
@@ -33,25 +32,21 @@ const styles = `
   .search-box input:focus { border-color: rgba(167,139,250,0.6); background: rgba(255,255,255,0.16); }
   .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; opacity: 0.6; }
 
-  /* ===== STATS ===== */
-  .stats-row { display: flex; gap: 10px; padding: 16px 20px; margin-top: -2px; }
+  .stats-row { display: flex; gap: 10px; padding: 16px 20px; }
   .stat-card { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px; text-align: center; }
   .stat-num { font-size: 20px; font-weight: 700; background: linear-gradient(135deg, #a78bfa, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
   .stat-label { font-size: 10px; color: rgba(255,255,255,0.45); font-family: 'Hind Siliguri', sans-serif; margin-top: 2px; }
 
-  /* ===== SECTION ===== */
   .section { padding: 0 20px; }
   .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
   .section-title { font-size: 16px; font-weight: 600; font-family: 'Hind Siliguri', sans-serif; }
   .see-all { font-size: 12px; color: #a78bfa; font-family: 'Hind Siliguri', sans-serif; cursor: pointer; }
 
-  /* ===== AREA PILLS ===== */
   .areas-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 24px; scrollbar-width: none; }
   .areas-scroll::-webkit-scrollbar { display: none; }
   .area-pill { flex-shrink: 0; padding: 8px 16px; border-radius: 30px; font-size: 13px; font-family: 'Hind Siliguri', sans-serif; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.7); transition: all 0.2s; white-space: nowrap; }
   .area-pill.active { background: linear-gradient(135deg, #6C63FF, #8B83FF); border-color: transparent; color: #fff; font-weight: 600; }
 
-  /* ===== CARDS ===== */
   .listing-grid-home { display: flex; flex-direction: column; gap: 14px; padding: 0 20px 100px; }
 
   .mes-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; overflow: hidden; transition: transform 0.2s, border-color 0.2s; cursor: pointer; display: flex; flex-direction: row; }
@@ -72,19 +67,17 @@ const styles = `
   .card-amenities { display: flex; gap: 5px; flex-wrap: wrap; }
   .amenity-tag { font-size: 9px; padding: 2px 7px; border-radius: 20px; font-family: 'Hind Siliguri', sans-serif; background: rgba(108,99,255,0.12); color: rgba(167,139,250,0.9); border: 1px solid rgba(108,99,255,0.2); }
 
-  /* ===== MISC ===== */
   .empty-state { text-align: center; padding: 48px 20px; color: rgba(255,255,255,0.35); font-family: 'Hind Siliguri', sans-serif; font-size: 15px; }
   .empty-icon { font-size: 40px; margin-bottom: 12px; }
   .loading-state { text-align: center; padding: 48px 20px; color: rgba(255,255,255,0.4); font-family: 'Hind Siliguri', sans-serif; }
   .footer-text { text-align: center; padding: 16px 20px; color: rgba(255,255,255,0.25); font-size: 12px; font-family: 'Hind Siliguri', sans-serif; }
 `;
 
-const AREAS = ['মিরপুর', 'ধানমন্ডি', 'উত্তরা', 'মোহাম্মদপুর'];
-
 export default function Home() {
   const navigate = useNavigate();
   const { settings } = useSettings();
   const [listings, setListings] = useState([]);
+  const [areas, setAreas] = useState([]);
   const [search, setSearch] = useState('');
   const [selectedArea, setSelectedArea] = useState('');
   const [loading, setLoading] = useState(true);
@@ -93,6 +86,9 @@ export default function Home() {
     API.get('/listings')
       .then(r => { setListings(r.data); setLoading(false); })
       .catch(() => setLoading(false));
+    API.get('/areas')
+      .then(r => setAreas(r.data))
+      .catch(() => { });
   }, []);
 
   const filtered = listings.filter(l => {
@@ -108,17 +104,14 @@ export default function Home() {
       <style>{styles}</style>
       <div className="home-app">
 
-        {/* ===== HERO ===== */}
+        {/* HERO */}
         <div className="hero-wrap">
-          {/* Background — image থাকলে image, না থাকলে color gradient */}
           {settings.heroBanner
             ? <img className="hero-bg" src={settings.heroBanner} alt="banner" />
             : <div className="hero-bg-color" style={{ background: `linear-gradient(135deg, ${primaryColor}cc, #1a1040)` }} />
           }
           <div className="hero-overlay" />
-
           <div className="hero-content">
-            {/* Top Bar */}
             <div className="top-bar">
               <div className="logo">
                 <div className="logo-icon">
@@ -131,13 +124,11 @@ export default function Home() {
               <div className="notif-btn">🔔</div>
             </div>
 
-            {/* Headline */}
             <div className="hero-headline">
               <p>স্বাগতম 👋</p>
               <h1>তোমার <span>পছন্দের মেস</span><br />{settings.tagline || 'খুঁজে নাও'}</h1>
             </div>
 
-            {/* Search */}
             <div className="search-box">
               <span className="search-icon">🔍</span>
               <input
@@ -150,14 +141,14 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Stats */}
+        {/* STATS */}
         <div className="stats-row">
           <div className="stat-card">
             <div className="stat-num">{listings.length}+</div>
             <div className="stat-label">মোট মেস</div>
           </div>
           <div className="stat-card">
-            <div className="stat-num">{AREAS.length}টি</div>
+            <div className="stat-num">{areas.length}টি</div>
             <div className="stat-label">এলাকা</div>
           </div>
           <div className="stat-card">
@@ -166,20 +157,23 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Area Filter */}
+        {/* AREA FILTER */}
         <div className="section">
           <div className="section-header">
             <span className="section-title">📍 এলাকা বেছে নাও</span>
           </div>
           <div className="areas-scroll">
-            <div className={`area-pill ${selectedArea === '' ? 'active' : ''}`}
+            <div
+              className={`area-pill ${selectedArea === '' ? 'active' : ''}`}
               onClick={() => { setSelectedArea(''); setSearch(''); }}>
               সব এলাকা
             </div>
-            {AREAS.map(a => (
-              <div key={a} className={`area-pill ${selectedArea === a ? 'active' : ''}`}
-                onClick={() => { setSelectedArea(selectedArea === a ? '' : a); setSearch(''); }}>
-                {a}
+            {areas.map(a => (
+              <div
+                key={a._id}
+                className={`area-pill ${selectedArea === a.nameBn ? 'active' : ''}`}
+                onClick={() => { setSelectedArea(selectedArea === a.nameBn ? '' : a.nameBn); setSearch(''); }}>
+                {a.nameBn}
               </div>
             ))}
           </div>
@@ -192,13 +186,13 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Listings */}
+        {/* LISTINGS */}
         {loading ? (
           <div className="loading-state">লোড হচ্ছে...</div>
         ) : filtered.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">🔍</div>
-            এই এলাকায় কোনো মেস পাওয়া যায়নি
+            {selectedArea ? `"${selectedArea}" এলাকায় কোনো মেস নেই` : 'কোনো মেস পাওয়া যায়নি'}
           </div>
         ) : (
           <div className="listing-grid-home">
