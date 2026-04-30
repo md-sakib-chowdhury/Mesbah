@@ -23,7 +23,11 @@ router.get('/match', auth, async (req, res) => {
         const scored = others.map(u => {
             let score = 0;
             const prefs = ['smoking', 'sleepSchedule', 'social', 'diet', 'prayers'];
-            prefs.forEach(p => { if (me.preferences[p] === u.preferences[p]) score += 20; });
+            if (me.preferences && u.preferences) {
+                prefs.forEach(p => {
+                    if (me.preferences[p] && me.preferences[p] === u.preferences[p]) score += 20;
+                });
+            }
             return { ...u.toObject(), matchScore: score };
         }).sort((a, b) => b.matchScore - a.matchScore);
         res.json(scored);
