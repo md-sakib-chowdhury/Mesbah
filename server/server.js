@@ -7,13 +7,24 @@ require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
+
+// CORS এবং Socket.io কনফিগারেশন আপডেট করা হয়েছে
 const io = new Server(server, {
-  cors: { origin: '*', methods: ['GET', 'POST'] }
+  cors: {
+    origin: ["https://vercel.app", "http://localhost:3000"],
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
 });
 
-app.use(cors());
+app.use(cors({
+  origin: ["https://vercel.app", "http://localhost:3000"],
+  credentials: true
+}));
+
 app.use(express.json());
 
+// আপনার রুটগুলো
 app.use('/api/auth', require('./src/routes/auth'));
 app.use('/api/listings', require('./src/routes/listings'));
 app.use('/api/users', require('./src/routes/users'));
