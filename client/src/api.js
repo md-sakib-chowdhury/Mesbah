@@ -1,10 +1,17 @@
 import axios from 'axios';
+
 const API = axios.create({
-    baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api'
+    // এটি আপনার রেন্ডার ব্যাকেন্ডের সঠিক ঠিকানা
+    baseURL: 'https://onrender.com',
 });
-API.interceptors.request.use(req => {
+
+// টোকেন অটোমেটিক পাঠানোর জন্য এই অংশটুকু
+API.interceptors.request.use((req) => {
     const token = localStorage.getItem('token');
-    if (token) req.headers.Authorization = `Bearer ${token}`;
+    if (token) {
+        req.headers.Authorization = `Bearer ${token}`;
+    }
     return req;
 });
+
 export default API;
