@@ -3,8 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { io } from 'socket.io-client';
 import API from '../api';
-
-const socket = io(process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000');
+// এই অংশটুকু পরিবর্তন করুন
+const socket = io('https://onrender.com', {
+  transports: ['websocket', 'polling'],
+  withCredentials: true
+});
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Sora:wght@400;600;700&display=swap');

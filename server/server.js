@@ -8,10 +8,9 @@ require('dotenv').config();
 const app = express();
 const server = http.createServer(app);
 
-// CORS এবং Socket.io কনফিগারেশন আপডেট করা হয়েছে
 const io = new Server(server, {
   cors: {
-    origin: ["https://vercel.app", "http://localhost:3000"],
+    origin: true, // এটি সব লাইভ ডোমেইনকে অনুমতি দিবে
     methods: ['GET', 'POST'],
     credentials: true
   }
