@@ -8,22 +8,24 @@ require('dotenv').config();
 const app = express();
 const server = http.createServer(app);
 
+// Socket.io কনফিগারেশন
 const io = new Server(server, {
   cors: {
-    origin: true, // এটি সব লাইভ ডোমেইনকে অনুমতি দিবে
+    origin: true, // এটি আপনার ভেরচেল ডোমেইনকে অটোমেটিক অনুমতি দিবে
     methods: ['GET', 'POST'],
     credentials: true
   }
 });
 
+// CORS কনফিগারেশন - এটিই আপনার মেইন সমস্যার সমাধান
 app.use(cors({
-  origin: ["https://vercel.app", "http://localhost:3000"],
+  origin: true,
   credentials: true
 }));
 
 app.use(express.json());
 
-// আপনার রুটগুলো
+// আপনার রুটগুলো (নিশ্চিত করুন আপনার ফাইল স্ট্রাকচার অনুযায়ী পাথগুলো সঠিক আছে)
 app.use('/api/auth', require('./src/routes/auth'));
 app.use('/api/listings', require('./src/routes/listings'));
 app.use('/api/users', require('./src/routes/users'));
@@ -32,29 +34,43 @@ app.use('/api/upload', require('./src/routes/upload'));
 app.use('/api/areas', require('./src/routes/areas'));
 app.use('/api/messages', require('./src/routes/messages'));
 
+// MongoDB কানেকশন
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected'))
-  .catch(err => console.log(err));
+  .catch(err => console.log('MongoDB Connection Error:', err));
 
+// Socket.io লজিক
 const onlineUsers = {};
 io.on('connection', (socket) => {
   socket.on('join', (userId) => {
-    onlineUsers[userId] = socket.id;
-    socket.userId = userId;
+    if (userId) {
+      onlineUsers[userId] = socket.id;
+      socket.userId = userId;
+    }
   });
 
   socket.on('sendMessage', async (data) => {
-    const { to, from, text } = data;
-    const Message = require('./src/models/Message');
-    const msg = await Message.create({ from, to, text });
-    if (onlineUsers[to]) io.to(onlineUsers[to]).emit('newMessage', msg);
-    socket.emit('newMessage', msg);
+    try {
+      const { to, from, text } = data;
+      const Message = require('./src/models/Message');
+      const msg = await Message.create({ from, to, text });
+
+      if (onlineUsers[to]) {
+        io.to(onlineUsers[to]).emit('newMessage', msg);
+      }
+      socket.emit('newMessage', msg);
+    } catch (error) {
+      console.error('Socket Message Error:', error);
+    }
   });
 
   socket.on('disconnect', () => {
-    if (socket.userId) delete onlineUsers[socket.userId];
+    if (socket.userId) {
+      delete onlineUsers[socket.userId];
+    }
   });
 });
 
+// সার্ভার পোর্ট
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-    // এটি আপনার রেন্ডার ব্যাকেন্ডের সঠিক ঠিকানা
+    // এখানে আপনার প্রজেক্টের পুরো নামসহ লিঙ্কটি দিতে হবে
     baseURL: 'https://onrender.com',
 });
 
