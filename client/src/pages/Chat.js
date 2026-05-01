@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { io } from 'socket.io-client';
 import API from '../api';
 
-const socket = io('http://localhost:5000');
+const socket = io(process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000');
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Sora:wght@400;600;700&display=swap');
